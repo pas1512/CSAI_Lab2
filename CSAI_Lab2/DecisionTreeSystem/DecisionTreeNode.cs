@@ -3,8 +3,6 @@
     internal class DecisionTreeNode
     {
         public string name => _name;
-
-        private bool _isNumber;
         private string _name;
         private Dictionary<string, DecisionTreeNode> _nexts;
 

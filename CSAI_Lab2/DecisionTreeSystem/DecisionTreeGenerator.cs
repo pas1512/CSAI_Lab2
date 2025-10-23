@@ -126,9 +126,6 @@ namespace CSAI_Lab2.DecisionTreeSystem
 
         private static float GetInfoGein(Table table, string key)
         {
-/*            if (table.GetKeys().Last() == key)
-                return -100;*/
-
             object[] results = table.GetResultColumn();
             float[] counts = CalculateValues(results);
             float before = GetEntropy(counts);
