@@ -4,9 +4,15 @@
     {
         public string name => _name;
 
+        private bool _isNumber;
         private string _name;
         private Dictionary<string, DecisionTreeNode> _nexts;
-        private string _value;
+
+        public DecisionTreeNode(string value)
+        {
+            _name = value;
+            _nexts = [];
+        }
 
         public DecisionTreeNode(string key, string[] values)
         {
@@ -25,14 +31,8 @@
 
         public bool IsLeaf(out string value)
         {
-            value = _value;
-            return _nexts == null && !string.IsNullOrEmpty(value);
-        }
-
-        public void SetLeaf(string value)
-        {
-            _nexts = null;
-            _value = value;
+            value = _name;
+            return _nexts == null || _nexts.Count == 0;
         }
 
         public string Test(string name, params (string attribute, object value)[] attributes)
@@ -60,7 +60,7 @@
             string value = string.Empty;
 
             if (current.value.IsNumericType())
-                value = TableTools.GetRangeOf(_nexts.Keys.ToArray(), current.value);
+                value = current.value.SelectRange(_nexts.Keys.ToArray());
             else
                 value = (string)current.value;
 
@@ -70,7 +70,7 @@
         public static string ParceToString(DecisionTreeNode node, string label = "", string tab = "")
         {
             if (node.IsLeaf(out var val))
-                return $"{tab}{label}: {node._value}\n";
+                return $"{tab}{label}: {val}\n";
 
             string result = "";
 

@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using System;
+using System.Data;
 using Table = System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, object>>;
 
 
@@ -119,5 +120,33 @@ namespace CSAI_Lab2
             string strData = File.ReadAllText(path); 
             return strData.ParceToTable();
         }
+    
+        public static float[] GetMids(float[] values)
+        {
+            float[] result = new float[values.Length - 1];
+
+            for(int i = 0;i < values.Length - 1;i++)
+                result[i] = (values[i] + values[i + 1]) /2;
+
+            return result;
+        }
+
+        public static string SelectRange(this object value, string[] ranges)
+        {
+            double val = Convert.ToDouble(value);
+
+            for (int i = 0; i < ranges.Length; i++)
+            {
+                string[] minMax = ranges[i].Split(';');
+                double min = double.Parse(minMax[0].Trim(' ', '[', ']'));
+                double max = double.Parse(minMax[1].Trim(' ', '[', ']'));
+
+                if (min < val && val <= max)
+                    return ranges[i];
+            }
+
+            return "";
+        }
+
     }
 }

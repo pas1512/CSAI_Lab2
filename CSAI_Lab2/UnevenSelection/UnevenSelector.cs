@@ -1,11 +1,11 @@
 public class UnevenSelector
 {
     private static Random _random = new Random();
-    private string[] _selectables;
+    private object[] _selectables;
     private float _totalWeight;
     private float[] _prefix;
 
-    public UnevenSelector(string[] selectables, float[] values)
+    public UnevenSelector(object[] selectables, float[] values)
     {
         _selectables = selectables;
         _prefix = new float[selectables.Length];
@@ -17,7 +17,7 @@ public class UnevenSelector
         }
     }
 
-    public string GetRandom()
+    public object GetRandom()
     {
         float randomValue = _random.NextSingle() * _totalWeight;
         int min = 0;

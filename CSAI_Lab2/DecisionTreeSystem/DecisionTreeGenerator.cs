@@ -1,56 +1,48 @@
-﻿using Table = System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, object>>;
-using DescritazedTable = System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, string>>;
-
+﻿using AttributeInfo = (string attribute, bool isNumber, float cutPoint);
+using BrancheInfo = (string value, System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, object>> subtable);
+using Table = System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, object>>;
 
 namespace CSAI_Lab2.DecisionTreeSystem
 {
     internal class DecisionTreeGenerator
     {
-        public static DecisionTreeNode GetTree(Table table) => GetTree(table.Descritaze());
-
-        private static DecisionTreeNode GetTree(DescritazedTable table)
+        public static DecisionTreeNode GetTree(Table table)
         {
             string[] keys = table.GetKeys();
-            string[] results = table.GetResultColumn();
-            string[] uniques = GetUniques(results);
+            object[] results = table.GetResultColumn();
+            object[] uniques = GetUniques(results);
 
             if (uniques.Length == 1)
             {
-                DecisionTreeNode leaf = new("leaf", []);
-                leaf.SetLeaf(uniques[0]);
-                return leaf;
+                return new((string)uniques[0], []);
             }
             else if (keys.Length == 1)
             {
                 float[] numbers = CalculateValues(results);
                 UnevenSelector unevenSelector = new UnevenSelector(uniques, numbers);
-                DecisionTreeNode leaf = new("leaf", []);
-                leaf.SetLeaf(unevenSelector.GetRandom());
-                return leaf;
+                return new((string)unevenSelector.GetRandom(), []);
             }
 
-            string targetKey = keys.OrderBy(k => GetInfoGein(table, k)).Last();
-            string[] targetValues = table.GetColumn(targetKey);
-            string[] uniqueValues = GetUniques(targetValues);
-            DecisionTreeNode node = new DecisionTreeNode(targetKey, uniqueValues);
+            AttributeInfo selected = GetBestAttribute(table);
+            BrancheInfo[] branches = GetBranches(table, selected);
+            DecisionTreeNode node = new DecisionTreeNode(selected.attribute, branches.Select(b => b.value).ToArray());
 
-            for (int i = 0; i < uniqueValues.Length; i++)
+            for (int i = 0; i < branches.Length; i++)
             {
-                DescritazedTable subtable = table.GetSubtable(targetKey, uniqueValues[i]);
-                DecisionTreeNode nextNode = GetTree(subtable);
-                node.SetNextNode(uniqueValues[i], nextNode);
+                DecisionTreeNode next = GetTree(branches[i].subtable);
+                node.SetNextNode(branches[i].value, next);
             }
 
             return node;
         }
 
-        private static float[] CalculateValues(string[] values)
+        private static float[] CalculateValues(object[] values)
         {
-            Dictionary<string, float> results = new Dictionary<string, float>();
+            Dictionary<object, float> results = new Dictionary<object, float>();
 
             for (int i = 0; i < values.Length; i++)
             {
-                string v = values[i];
+                object v = values[i];
 
                 if (results.TryGetValue(v, out float count))
                     results[v] = count + 1;
@@ -61,13 +53,13 @@ namespace CSAI_Lab2.DecisionTreeSystem
             return results.Values.ToArray();
         }
 
-        private static string[] GetUniques(string[] values)
+        private static object[] GetUniques(object[] values)
         {
-            List<string> result = new List<string>();
+            List<object> result = new List<object>();
 
             for (int i = 0; i < values.Length; i++)
             {
-                string v = values[i];
+                object v = values[i];
 
                 if (!result.Contains(v))
                     result.Add(v);
@@ -95,30 +87,123 @@ namespace CSAI_Lab2.DecisionTreeSystem
             return -entropy;
         }
 
-        private static float GetInfoGein(DescritazedTable table, string key)
+        private static float GetWeightedEntropyPart(Table table, string key, Predicate<float> predicate)
         {
-            if (table.GetKeys().Last() == key)
-                return -100;
+            Table subtable = table.GetSubtable(key, predicate);
+            object[] results = subtable.GetResultColumn();
+            float[] counts = CalculateValues(results);
+            return counts.Sum() / table.Count * GetEntropy(counts);
+        }
 
-            string[] results = table.GetResultColumn();
+        private static float GetInfoGein(Table table, string key, out float bestCutPoint)
+        {
+            var attrRes = table.GetAttributeResultSamples(key);
+            var orderedAttrRes = attrRes.OrderBy(ar => (float)ar.value).ToArray();
+            float[] cutPoints = Utilities.GetMids(orderedAttrRes.Select(o => (float)o.value).ToArray());
+
+            object[] results = table.GetResultColumn();
+            float[] counts = CalculateValues(results);
+            float entropyBefore = GetEntropy(counts);
+            float maxInfoGain = 0;
+            bestCutPoint = 0;
+
+            foreach (var cutPoint in cutPoints)
+            {
+                float leftEntrpyPart = GetWeightedEntropyPart(table, key, v => v <= cutPoint);
+                float rightEntrpyPart = GetWeightedEntropyPart(table, key, v => v > cutPoint);
+                float entropyAfter = leftEntrpyPart + rightEntrpyPart;
+                float currentInfoGain = entropyBefore - entropyAfter;
+
+                if (currentInfoGain > maxInfoGain)
+                {
+                    maxInfoGain = currentInfoGain;
+                    bestCutPoint = cutPoint;
+                }
+            }
+
+            return maxInfoGain;
+        }
+
+        private static float GetInfoGein(Table table, string key)
+        {
+/*            if (table.GetKeys().Last() == key)
+                return -100;*/
+
+            object[] results = table.GetResultColumn();
             float[] counts = CalculateValues(results);
             float before = GetEntropy(counts);
 
-            string[] values = table.GetColumn(key);
-            string[] uniqValues = GetUniques(values);
+            object[] values = table.GetColumn(key);
+            object[] uniqValues = GetUniques(values);
             float sum = counts.Sum();
             float after = 0;
 
             for (int i = 0; i < uniqValues.Length; i++)
             {
-                DescritazedTable subtable = table.GetSubtable(key, uniqValues[i]);
-                string[] subResults = subtable.GetResultColumn();
+                Table subtable = table.GetSubtable(key, uniqValues[i]);
+                object[] subResults = subtable.GetResultColumn();
                 float[] subCounts = CalculateValues(subResults);
                 float weight = subCounts.Sum() / sum;
                 after += weight * GetEntropy(subCounts);
             }
 
             return before - after;
-        } 
+        }
+
+        private static AttributeInfo GetBestAttribute(Table table)
+        {
+            string[] keys = table.GetKeys();
+            float maxGain = 0;
+            string currentKey = "";
+            float currentCutPoint = 0;
+            bool currentIsNumber = false;
+
+            for(int i = 0; i < keys.Length - 1; i++)
+            {
+                bool isNumber = table[0][keys[i]].IsNumericType();
+                float currentGain = 0;
+                float cutPoint = 0;
+
+                if (isNumber)
+                    currentGain = GetInfoGein(table, keys[i], out cutPoint);
+                else
+                    currentGain = GetInfoGein(table, keys[i]);
+
+                if(currentGain > maxGain)
+                {
+                    maxGain = currentGain;
+                    currentKey = keys[i];
+                    currentIsNumber = isNumber;
+                    currentCutPoint = cutPoint;
+                }
+            }
+
+            return new (currentKey, currentIsNumber, currentCutPoint);
+        }
+    
+        private static BrancheInfo[] GetBranches(Table table, AttributeInfo selected)
+        {
+            if (selected.isNumber)
+            {
+                string left = $"[{float.NegativeInfinity}; {selected.cutPoint:F2}]";
+                string right = $"[{selected.cutPoint:F2}; {float.PositiveInfinity}]";
+                return [(left, table.GetSubtable(selected.attribute, v => (float)v <= selected.cutPoint)), 
+                    (right, table.GetSubtable(selected.attribute, v => (float)v > selected.cutPoint))];
+            }
+            else
+            {
+                object[] targetValues = table.GetColumn(selected.attribute);
+                object[] uniqueValues = GetUniques(targetValues);
+                BrancheInfo[] branches = new BrancheInfo[uniqueValues.Length];
+
+                for (int i = 0; i < uniqueValues.Length; i++)
+                {
+                    Table subtable = table.GetSubtable(selected.attribute, uniqueValues[i]);
+                    branches[i] = new BrancheInfo((string)uniqueValues[i], subtable);
+                }
+
+                return branches;
+            }
+        }
     }
 }

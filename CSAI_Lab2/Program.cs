@@ -1,4 +1,5 @@
-﻿using CSAI_Lab2.DecisionTreeSystem;
+﻿using CSAI_Lab2;
+using CSAI_Lab2.DecisionTreeSystem;
 using Table = System.Collections.Generic.List<System.Collections.Generic.Dictionary<string, object>>;
 
 const string DATA_PATH = "C:\\ProgramData\\Lab2\\Data.txt";
@@ -48,3 +49,18 @@ Console.WriteLine(final.Test("Тест 9", ("Час на сесію", 4.0f), ("�
 Console.WriteLine(final.Test("Тест 10", ("Час на сесію", 2.2f), ("Якість фото", "Висока"), ("Тип документа", "Паспорт (ID-картка)"), ("Освітлення", "Нерівномірне"), ("Відповідність фото", "Так")));
 Console.WriteLine(final.Test("Тест 11", ("Час на сесію", 12.4f), ("Якість фото", "Висока"), ("Тип документа", "Водійське"), ("Освітлення", "Добре"), ("Відповідність фото", "Так")));
 Console.WriteLine(final.Test("Тест 12", ("Час на сесію", 3.5f), ("Якість фото", "Середня"), ("Тип документа", "Паспорт (ID-картка)"), ("Освітлення", "Нерівномірне"), ("Відповідність фото", "Так")));
+
+/*string S(object obj) => obj.ToString();
+
+Table table1 = new Table() {
+    new(){ [S(Attrs.Дохід)] = 25, [S(Attrs.Історія)] = S(History.Добра), [S(Attrs.Забезпечення)] = S(Security.Ні), [S(Attrs.Кредит)] = 100, [S(Attrs.Рішення)] = S(Decision.Схвалити)},
+    new(){ [S(Attrs.Дохід)] = 40, [S(Attrs.Історія)] = S(History.Добра), [S(Attrs.Забезпечення)] = S(Security.Так), [S(Attrs.Кредит)] = 250, [S(Attrs.Рішення)] = S(Decision.Схвалити)},
+    new(){ [S(Attrs.Дохід)] = 15, [S(Attrs.Історія)] = S(History.Погана), [S(Attrs.Забезпечення)] = S(Security.Ні), [S(Attrs.Кредит)] = 50, [S(Attrs.Рішення)] = S(Decision.Відмовити)},
+    new(){ [S(Attrs.Дохід)] = 60, [S(Attrs.Історія)] = S(History.Добра), [S(Attrs.Забезпечення)] = S(Security.Так), [S(Attrs.Кредит)] = 400, [S(Attrs.Рішення)] = S(Decision.Схвалити)},
+    new(){ [S(Attrs.Дохід)] = 30, [S(Attrs.Історія)] = S(History.Середня), [S(Attrs.Забезпечення)] = S(Security.Ні), [S(Attrs.Кредит)] = 150, [S(Attrs.Рішення)] = S(Decision.Відмовити)},
+};
+
+Console.WriteLine(table1.ParceToString());
+
+DecisionTreeNode dt = DecisionTreeGenerator.GetTree(table1);
+Console.WriteLine(dt);*/
