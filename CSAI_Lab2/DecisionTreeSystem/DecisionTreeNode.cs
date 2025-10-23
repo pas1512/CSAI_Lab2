@@ -67,20 +67,18 @@
             return _nexts[value].Evaluate(attributes);
         }
 
-        public static string ParceToString(DecisionTreeNode node, string label = "", string tab = "")
+        public static string ParceToString(DecisionTreeNode node, string value = "", string prevName = "", string tab = "")
         {
             if (node.IsLeaf(out var val))
-                return $"{tab}{label}: {val}\n";
+                return $"{tab}{prevName}: {value} => {val}\n";
 
             string result = "";
 
-            if (string.IsNullOrEmpty(label))
-                result = tab + node._name + "=>\n";
-            else
-                result = $"{tab}{label}: {node._name}=>\n";
+            if (!string.IsNullOrEmpty(value))
+                result = $"{tab}{prevName}: {value} =>\n";
 
             foreach (var next in node._nexts)
-                result += ParceToString(next.Value, next.Key, tab + "\t");
+                result += ParceToString(next.Value, next.Key, node._name, tab + "\t");
 
             return result;
         }

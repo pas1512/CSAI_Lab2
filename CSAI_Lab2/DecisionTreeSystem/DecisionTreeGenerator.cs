@@ -153,7 +153,7 @@ namespace CSAI_Lab2.DecisionTreeSystem
         private static AttributeInfo GetBestAttribute(Table table)
         {
             string[] keys = table.GetKeys();
-            float maxGain = 0;
+            float maxGain = -1;
             string currentKey = "";
             float currentCutPoint = 0;
             bool currentIsNumber = false;
